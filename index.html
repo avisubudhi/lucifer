@@ -1,0 +1,138 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Us: The Game</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#111}
+html,body{margin:0;height:100%;background:var(--bg);font-family:'Press Start 2P',monospace}
+body{display:flex;align-items:center;justify-content:center}
+#w{position:relative;width:min(100vw,calc(100vh*16/9));aspect-ratio:16/9}
+canvas{width:100%;height:100%;image-rendering:pixelated;display:block}
+#dlg{position:absolute;left:50%;top:42%;transform:translate(-50%,-50%);background:#fff;color:#222;border:4px solid #222;padding:14px;text-align:center;font-size:clamp(8px,1.6vw,14px);display:none;box-shadow:4px 4px 0 #222;line-height:1.6}
+#dlg button{font:inherit;margin:8px 4px 0;padding:8px 10px;border:3px solid #222;background:#fbd000;cursor:pointer}
+#mute{position:absolute;top:6px;right:6px;font-size:16px;padding:4px 8px;border:3px solid #222;background:#fff;cursor:pointer}
+</style></head><body>
+<div id="w"><canvas id="c"></canvas>
+<div id="dlg"><div id="q"></div><button data-a="yes">Yes 💖</button><button data-a="no">No</button><button data-a="maybe">Maybe</button></div>
+<button id="mute" title="Sound on/off">🔊</button></div>
+<script>
+const c=document.getElementById('c'),g=c.getContext('2d'),W=480,H=270;c.width=W;c.height=H;
+const P={d:'#2b2118',t:'#2fb6a3',j:'#3b4a6b',r:'#e52521',s:'#f8b878',k:'#111',m:'#6b3a12',b:'#2038ec',n:'#6b3a12',h:'#4a2a10',p:'#ff7eb6',w:'#fff'};
+const B=["..d.dd.d..",".dddddddd.",".dssssssd.","..skssks..","..ssssss..","...ssss...",".tttttttt.","tttttttttt","stttttttts","..jjjjjj..","..jj..jj..","..ww..ww.."];
+const G=["..hhrrhh..",".hhhhhhhh.",".hssssssh.",".hskssksh.",".hssssssh.","..hssssh..","..pppppp..",".pppppppp.","pppppppppp","..pppppp..","...s..s...","..ww..ww.."];
+function spr(a,x,y,f){for(let j=0;j<12;j++)for(let i=0;i<10;i++){const ch=a[j][i];if(ch=='.')continue;g.fillStyle=P[ch];g.fillRect(Math.round(x-10+(f?9-i:i)*2),Math.round(y-12+j*2),2,2)}}
+// ---------- scenery: 4 original top-down grass maps ----------
+function rng(a){return()=>(a=a*16807%2147483647)/2147483647}
+function mk(i){const v=document.createElement('canvas');v.width=W;v.height=H;const x=v.getContext('2d'),r=rng(7+i*31);
+ const pal=[['#7ec850','#72bc46'],['#4f9a3c','#468f35'],['#86cf58','#7ac34d'],['#8fc85a','#83bc4f']][i];
+ for(let ty=0;ty<17;ty++)for(let tx=0;tx<30;tx++){x.fillStyle=pal[(tx+ty)&1];x.fillRect(tx*16,ty*16,16,16)}
+ x.fillStyle='rgba(0,0,0,.16)';for(let k=0;k<170;k++){const a=r()*W|0,b=r()*H|0;x.fillRect(a,b,1,3);x.fillRect(a+2,b+1,1,2)}
+ const fl=n=>{for(let k=0;k<n;k++){x.fillStyle=['#ff5a7a','#ffe14d','#fff','#c77dff'][r()*4|0];const a=r()*W|0,b=r()*H|0;x.fillRect(a,b,3,3);x.fillStyle='#ffd23f';x.fillRect(a+1,b+1,1,1)}};
+ const tree=(a,b)=>{x.fillStyle='rgba(0,0,0,.25)';x.beginPath();x.ellipse(a,b+8,13,4,0,0,7);x.fill();x.fillStyle='#6b3a12';x.fillRect(a-2,b-2,5,10);x.fillStyle='#2f7d32';x.beginPath();x.arc(a,b-8,13,0,7);x.fill();x.fillStyle='#43a047';x.beginPath();x.arc(a-3,b-11,7,0,7);x.fill()};
+ const path=(a,b,w,h)=>{x.fillStyle='#c9a66b';x.fillRect(a,b,w,h);x.fillStyle='#b38d52';x.fillRect(a,b,w>h?w:2,w>h?2:h);x.fillRect(a+(w>h?0:w-2),b+(w>h?h-2:0),w>h?w:2,w>h?2:h)};
+ if(i==0){fl(110);[[60,200],[400,60],[250,220],[120,70]].forEach(([a,b])=>{x.fillStyle='#2f7d32';x.beginPath();x.arc(a,b,10,0,7);x.fill();x.fillStyle='#43a047';x.beginPath();x.arc(a-3,b-3,5,0,7);x.fill()})}
+ if(i==1){path(0,120,W,32);for(let a=20;a<W;a+=44){tree(a+r()*10,24+r()*8);tree(a+22,H-12-r()*6)}fl(25)}
+ if(i==2){x.fillStyle='#e8d9a0';x.beginPath();x.ellipse(340,110,112,64,0,0,7);x.fill();x.fillStyle='#3a8fe0';x.beginPath();x.ellipse(340,110,98,52,0,0,7);x.fill();x.strokeStyle='#8cc4ff';[[300,100,16],[370,125,12],[345,90,9]].forEach(([a,b,w])=>{x.beginPath();x.ellipse(a,b,w,w/3,0,0,7);x.stroke()});tree(50,70);tree(90,200);fl(45)}
+ if(i==3){path(200,0,32,H);x.fillStyle='#8a5a2b';for(let a=0;a<190;a+=16){x.fillRect(a,40,3,16);x.fillRect(a,44,16,3)}x.fillStyle='#3f8a35';x.fillRect(40,150,110,80);x.fillStyle='#2f7a2a';for(let k=0;k<70;k++){const a=40+r()*104,b=150+r()*72;x.fillRect(a,b,1,5);x.fillRect(a+2,b+1,1,4)}x.fillStyle='#8a5a2b';x.fillRect(262,50,3,22);x.fillRect(250,44,26,12);x.fillStyle='#fff';x.fillRect(253,47,20,2);fl(30)}
+ return v}
+const bgs=[0,1,2,3].map(mk);let bi=Math.random()*4|0;
+c.addEventListener('click',()=>{if(st=='intro'){if(el()<15000)sT=performance.now()-15000;return}bi=(bi+1+(Math.random()*3|0))%4});
+// ---------- sound (8-bit, Web Audio, no files) ----------
+let ac=null,muted=false;
+const initAudio=()=>{try{ac=ac||new(window.AudioContext||window.webkitAudioContext)();if(ac.state=='suspended')ac.resume()}catch(e){}};
+addEventListener('pointerdown',initAudio);
+document.getElementById('mute').onclick=e=>{initAudio();muted=!muted;e.target.textContent=muted?'🔇':'🔊'};
+function tone(f,d,at=0,type='square',v=.05,f2){if(muted||!ac)return;const o=ac.createOscillator(),n=ac.createGain(),t0=ac.currentTime+at;o.type=type;o.frequency.setValueAtTime(f,t0);if(f2)o.frequency.exponentialRampToValueAtTime(f2,t0+d);n.gain.setValueAtTime(v,t0);n.gain.exponentialRampToValueAtTime(.001,t0+d);o.connect(n);n.connect(ac.destination);o.start(t0);o.stop(t0+d)}
+function sfx(n){const S={
+ hug:()=>[523,659,784,1047].forEach((f,i)=>tone(f,.12,i*.09)),
+ angry:()=>tone(300,.5,0,'sawtooth',.06,80),
+ coin:()=>{tone(988,.08);tone(1319,.3,.08)},
+ ask:()=>{tone(660,.1);tone(880,.15,.1)},
+ yes:()=>[523,659,784,659,784,1047].forEach((f,i)=>tone(f,.14,i*.1)),
+ no:()=>tone(200,.25,0,'square',.05,120),
+ sorry:()=>{tone(392,.25,0,'triangle',.08);tone(330,.4,.25,'triangle',.08)},
+ block:()=>{tone(150,.08,0,'square',.07);tone(988,.08,.08);tone(1319,.3,.16)}};
+ if(S[n])S[n]()}
+// ---------- story ----------
+const PAUSE=3000,STAND=10000,SILENT=5000,MAXNO=15,YMAX=H-16;
+const SORRY=["I'm sorry 😢","I won't annoy you, I'm sorry","I didn't mean it, please...","I promise I'll be better","I'll slow down, I swear","I can't lose you 🥺","Tell me what to fix, I will","I love you so much","I'm truly, truly sorry","I'll do anything for you","Please don't stay mad","You're my whole world","I'll never run off again","Just one more chance?"];
+const HEART=["I'm sorry from the bottom of my heart","I was wrong to shout, forgive me","I'll try so much harder 😭","You mean everything to me","Please, let me make it right","I love you, truly"];
+const FIGHT=[['b',"You don't love me!"],['g',"I do love you...!"],['b',"You don't like me!"],['g',"Then stop running off!"],['b',"I tried everything!"],['g',"You never listen!"]];
+let st='intro',sT=performance.now(),hintT=0,m={x:240,y:130},lm={x:240,y:130},sp=0,tire=0,boy={x:150,y:150,f:0},gf={x:70,y:150,f:0},hugT=0,cool=0,refused=0,effort=false,phrase='',props=[],carry=[],hearts=[],t=0;
+const E=['🌹','🌻','🌷','🌸','💐','🌺','⭐','🌟','✨','🍫','🍰','🧁','🍓','🍩','🍦','🧸','🐰','🐻','🦄','🎀','💍','💄','🎁','💖'],dlg=document.getElementById('dlg'),go=s=>{st=s;sT=performance.now()},el=()=>performance.now()-sT;
+c.addEventListener('pointermove',e=>{const r=c.getBoundingClientRect();m.x=(e.clientX-r.left)/r.width*W;m.y=(e.clientY-r.top)/r.height*H});
+const mv=(o,tx,ty,s)=>{const dx=tx-o.x,dy=ty-o.y,d=Math.hypot(dx,dy);if(d>s){o.x+=dx/d*s;o.y+=dy/d*s;if(Math.abs(dx)>1)o.f=dx<0?1:0}return d};
+const newProps=()=>props=Array.from({length:effort?3:1},()=>({e:E[Math.random()*E.length|0],x:40+Math.random()*(W-80),y:40+Math.random()*(H-80)}));
+function hug(){sfx('hug');go('hug');hugT=90;gf.x=boy.x+16;gf.y=boy.y;gf.f=1;boy.f=0}
+function answer(a){sfx(a=='yes'?'yes':'no');dlg.style.display='none';
+ if(a=='yes'){carry=[];tire=0;refused=0;effort=false;hug();return}
+ refused++;carry=[];
+ if(!effort&&refused>=MAXNO){sfx('angry');go('stand');return}
+ phrase=effort?HEART[(refused-MAXNO)%HEART.length]:SORRY[Math.min(refused,SORRY.length-1)];sfx('sorry');go('sorry')}
+dlg.onclick=e=>{const a=e.target.dataset.a;if(a)answer(a)};
+function update(){t++;if(st=='intro'){if(el()>=17000){go('chase');hintT=performance.now()+7000}return}
+ const ms=Math.hypot(m.x-lm.x,m.y-lm.y);lm.x=m.x;lm.y=m.y;sp+=(ms-sp)*.15;
+ if(st=='chase'){
+  const ty=Math.min(Math.max(m.y,30),YMAX),d=Math.hypot(m.x-boy.x,ty-boy.y),bs=Math.min(d*.08,4.5);mv(boy,m.x,ty,bs);
+  tire=Math.max(0,tire+(sp>9?1.2:-.6));
+  const gs=1.9*(1-Math.min(tire/150,1)*.85),gd=Math.hypot(boy.x-gf.x,boy.y-gf.y);
+  if(gd>16)mv(gf,boy.x,boy.y,gs);
+  cool--;
+  if(tire>=150){st='angry';sfx('angry')}else if(gd<=18&&bs<.6&&cool<=0)hug();
+ }else if(st=='hug'){
+  if(t%6==0)hearts.push({x:(boy.x+gf.x)/2,y:boy.y-14,l:50});
+  if(--hugT<=0){go('chase');cool=120}
+ }else if(st=='angry'){
+  if(mv(boy,gf.x-16,gf.y,1.6)<22&&el()>2000){phrase=SORRY[0];sfx('sorry');go('sorry')}
+ }else if(st=='sorry'){
+  if(el()>PAUSE){newProps();go('mend')}
+ }else if(st=='mend'){
+  if(props.length){if(mv(boy,props[0].x,props[0].y,2.6)<8){carry.push(props.shift());sfx('coin')}}
+  else if(mv(boy,gf.x-16,gf.y,2.6)<8){go('ask');sfx('ask');document.getElementById('q').textContent='Do you want to forgive him? '+carry.map(p=>p.e).join('');dlg.style.display='block'}
+ }else if(st=='stand'){
+  if(el()>STAND+SILENT){effort=true;phrase=HEART[0];sfx('sorry');go('sorry')}
+ }
+ hearts.forEach(h=>{h.y-=.6;h.l--});hearts=hearts.filter(h=>h.l>0);
+}
+const BOYC={bg:'#d6ebff',bd:'#2a6fdb',tx:'#12306b'},GIRLC={bg:'#ffe0ee',bd:'#d6336c',tx:'#6b1236'};
+function say(s,o,k,other){g.font='6px "Press Start 2P",monospace';let L=[s];
+ if(s.length>20){const mid=s.length/2,j=s.lastIndexOf(' ',mid),i=s.indexOf(' ',mid),c=(i<0||(j>0&&mid-j<i-mid))?j:i;if(c>0)L=[s.slice(0,c),s.slice(c+1)]}
+ const w=Math.max(...L.map(l=>g.measureText(l).width))+10,h=L.length*10+4,d=o.x<=other.x?-1:1;let cx=o.x+d*(14+w/2),y=o.y-h/2,tail=1;
+ if(cx-w/2<2||cx+w/2>W-2){tail=0;cx=Math.min(Math.max(o.x,w/2+2),W-w/2-2);y=Math.max(o.y-44-h,2)}
+ g.fillStyle=k.bg;g.fillRect(cx-w/2,y,w,h);g.strokeStyle=k.bd;g.lineWidth=1;g.strokeRect(cx-w/2+.5,y+.5,w-1,h-1);
+ if(tail){const e=cx-d*w/2,tp=e-d*5,m=y+h/2;g.fillStyle=k.bd;g.beginPath();g.moveTo(e,m-3);g.lineTo(e,m+3);g.lineTo(tp,m);g.fill()}
+ g.fillStyle=k.tx;g.textAlign='center';L.forEach((l,i)=>g.fillText(l,cx,y+9+i*10))}
+function txt(s,x,y,sz){g.font=(sz||8)+'px "Press Start 2P",monospace';g.textAlign='center';g.fillStyle='#000';g.fillText(s,x+1,y+1);g.fillStyle='#fff';g.fillText(s,x,y)}
+function drawGame(){
+ g.drawImage(bgs[bi],0,0);
+ g.font='16px serif';g.textAlign='center';props.forEach(p=>g.fillText(p.e,p.x,p.y+Math.sin(t/8)*3));
+ [[gf,G],[boy,B]].sort((a,b)=>a[0].y-b[0].y).forEach(([o,a])=>{g.fillStyle='rgba(0,0,0,.25)';g.beginPath();g.ellipse(o.x,o.y+12,9,3,0,0,7);g.fill();spr(a,o.x,o.y+(st=='chase'&&o==boy&&sp>2?Math.sin(t/3):0),o.f)});
+ g.font='14px serif';g.textAlign='center';
+ if(['angry','sorry','mend','ask','stand'].includes(st))g.fillText(refused>0&&st!='stand'?'😒':'😠',gf.x,gf.y-18);
+ const bm=st=='stand'?(el()<STAND?'😡':'😔'):(effort&&['sorry','mend','ask'].includes(st)?'😭':'');
+ if(bm)g.fillText(bm,boy.x,boy.y-(carry.length?34:18));
+ carry.forEach((p,i)=>g.fillText(p.e,boy.x+(i-(carry.length-1)/2)*12,boy.y-18));
+ if(st=='angry')say("You are annoying! I won't talk to you!",gf,GIRLC,boy);
+ if(st=='sorry')say(phrase,boy,BOYC,gf);
+ if(st=='stand'){if(el()<STAND){const [w,x]=FIGHT[Math.min(el()/1650|0,5)],b=w=='b';say(x,b?boy:gf,b?BOYC:GIRLC,b?gf:boy)}else say('...',boy,BOYC,gf)}
+ hearts.forEach(h=>{g.globalAlpha=h.l/50;g.fillText('💖',h.x,h.y);g.globalAlpha=1});
+ if(performance.now()<hintT){txt('Move your cursor! Not too fast...',W/2,24,8);txt(ac?'Click: new scenery':'Click: sound + new scenery',W/2,40,6)}
+}
+
+// ---------- opening screen: light-blue sky + loving message, then pans down to the game ----------
+// TODO(personalize): rewrite this message in your own words
+const INTRO=["A tiny version of us","Two little pixels who chase each other,","get a bit cross sometimes, say sorry,","and always end up in one big hug.","","Happy 4 years, my love."];
+const camY=()=>{const k=Math.min(Math.max((el()-15000)/2000,0),1);return H*(k<.5?2*k*k:1-2*(1-k)*(1-k))};
+function drawIntro(){const q=g.createLinearGradient(0,0,0,H);q.addColorStop(0,'#8fd3ff');q.addColorStop(1,'#dff4ff');g.fillStyle=q;g.fillRect(0,0,W,H);
+ g.fillStyle='#fff';[[70,200,0],[400,215,1],[330,60,2],[90,70,3]].forEach(([x,y])=>[0,16,32].forEach((o,i)=>{g.beginPath();g.arc(x+o,y-(i==1?7:0),13,0,7);g.fill()}));
+ g.fillStyle='#7ec850';g.fillRect(0,H-30,W,30);g.fillStyle='#5fae3a';g.fillRect(0,H-30,W,3);
+ spr(B,214,H-40,0);spr(G,246,H-40,1);g.font='12px serif';g.textAlign='center';g.fillText('💖',230,H-62+Math.sin(t/12)*3);
+ const bx=50,by=22,bw=380,bh=150;g.fillStyle='rgba(0,0,0,.2)';g.fillRect(bx+4,by+4,bw,bh);g.fillStyle='#fff';g.fillRect(bx,by,bw,bh);g.strokeStyle='#222';g.lineWidth=3;g.strokeRect(bx+1.5,by+1.5,bw-3,bh-3);
+ g.textAlign='center';g.font='10px "Press Start 2P",monospace';g.fillStyle='#d6336c';g.fillText(INTRO[0]+' 💕',W/2,by+30);
+ g.font='7px "Press Start 2P",monospace';g.fillStyle='#222';INTRO.slice(1).forEach((l,i)=>g.fillText(l,W/2,by+56+i*15));
+ g.fillStyle='#d6336c';g.fillText('▼',W/2,by+bh-8+Math.sin(t/8)*2)}
+function draw(){
+ if(st!='intro'){drawGame();return}
+ const cy=camY();g.save();g.translate(0,-cy);drawIntro();g.restore();g.save();g.translate(0,H-cy);drawGame();g.restore()}
+(function loop(){update();draw();requestAnimationFrame(loop)})();
+</script></body></html>
